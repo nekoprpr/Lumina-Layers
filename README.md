@@ -13,49 +13,59 @@ Physics-Based Multi-Material FDM Color System
 **Nature**: Non-profit independent implementation, open-source community project
 
 ---
+Inspiration and Technical Statements
 
-## Inspiration & Technical Declaration
+### Acknowledgements to Pioneers
 
-### Acknowledgment to Pioneers
+This project owes its existence to the open sharing of the following technologies:
 
-This project exists thanks to the public disclosure and sharing of the following technologies:
+- **HueForge** - The first tool to introduce optical color mixing to the FDM community, demonstrating that layering transparent materials can achieve rich colors through light transmission.
 
-- **HueForge** - The first tool to introduce optical color mixing to the FDM community, proving that transparent filament layer stacking can create rich colors through light transmission.
-- **AutoForge** - Automated color matching workflows that made multi-material color printing accessible.
-- **CMYK Printing Theory** - Classic subtractive color model adapted for layer-by-layer transmission in 3D printing.
+- **AutoForge** - An automated color matching workflow, making multi-material color printing easy to use.
 
-### Technical Distinction & Positioning
+- **CMYK Printing Theory** - A layer-by-layer transmission adaptation of the classic subtractive color model in 3D printing.
 
-Traditional tools rely on theoretical calculations (e.g., TD1/TD0 transmission distance values), but these parameters easily fail due to filament batch variations, nozzle temperature fluctuations, and slicer logic differences.
+### Technical Differentiation and Positioning
 
-**Lumina Studio takes a "brute force physical sampling" approach**:
-1. Print a 1024-color physical calibration board (full permutation of 4 colors × 5 layers)
-2. Photograph and scan to extract real RGB data
-3. Build a "ground truth lookup table" (LUT)
-4. directly matching via nearest-neighbor algorithm
+Traditional tools rely on theoretical calculations (such as TD1/TD0 transmission distance values), but these parameters are highly susceptible to failure due to various objective factors.
 
+ **Lumina Studio employs an exhaustive search approach:**
 
-### Prior Art Statement
+1. Print a 1024-color physical calibration board (4 colors x 5 layers, full permutation)
 
-The core principles of FDM multi-layer color mixing were publicly disclosed by software like HueForge between 2022-2023, and are considered **Prior Art**. Pioneers chose to keep it open to help the community grow, so this technique is generally **not patentable**.
+2. Scan the board by photograph and extract the actual RGB data
 
-Lumina Studio is a completely independent non-profit implementation and does not reference any non-public patents.
+3. Create a "LUT" (Learning Unknown Test Table)
 
-**Special thanks to the HueForge team for supporting open source!**
+4. Use a nearest neighbor algorithm for matching (similar to the matching in Bambulab's keychain generator).
 
+### Prior Art Declaration
+
+The core principle of FDM multilayer overlay was publicly disclosed by software such as HueForge between 2022 and 2023, and is considered **prior art**.
+
+The HueForge authors have also clearly stated that this technology has entered the public domain, and in most countries and regions, if the patent office carefully examines it, a principle patent would certainly be rejected.
+
+The pioneers have chosen to remain open to help the community develop; therefore, this technology is generally **not patentable**.
+
+Lumina Studio will continue to maintain its open-source, collaborative, and non-profit positioning, and we welcome everyone's supervision.
+Lumina Studio did not refer to any patent applications because such patents usually only contain specifications and the technical code is not disclosed in the short term. Blindly referring to these patents would affect its own development process.
+
+**Special thanks to the HueForge team for their support and understanding of open source!**  **
 ---
 
-## Open Ecosystem Pledge
+## Open Ecosystem
 
 ### About .npy Calibration Files
 
-All calibration presets (`.npy` files) are **completely free and open**, following these principles:
+All calibration presets (`.npy` files) are **completely free and open**, adhering to the following principles:
 
-- **Anti-Vendor Lock-in**: Past, present, and future—we will **NEVER** force users to use specific filament brands, nor will we require manufacturers to produce "compatible filaments." This violates the spirit of open source.
+- **No Vendor Lock-in:** We have never, currently, and will never force users to use specific consumable brands, nor will we require manufacturers to produce specific "compatible consumables" that meet our requirements. This violates the spirit of open source.
 
-- **Community Co-creation**: Everyone (users, organizations, filament manufacturers) is welcome to submit PRs to sync calibration presets. Your printer data can help others.
+- **Community Collaboration:** We welcome all users, organizations, and consumable manufacturers to submit PRs and synchronize calibration presets. Your printer data can help others.
 
-**Data Openness = Technology Democratization**
+- No other testing tools are needed; all you need is a 3D printer and a mobile phone.
+
+**Open Data = Democratization of Technology**
 
 ---
 
