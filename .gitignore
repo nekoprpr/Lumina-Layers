@@ -211,6 +211,7 @@ output/*.3mf
 output/*.glb
 output/*.npy
 output/lumina_stats.txt
+output/*
 
 # Gradio cache directory
 output/.gradio_cache/

@@ -788,12 +788,46 @@ def create_converter_tab_content(lang: str) -> dict:
                     value=False,
                     info=I18n.get('conv_batch_mode_info', lang)
                 )
+            
+            # ========== Image Crop Extension (Non-invasive) ==========
+            # Hidden state for preprocessing
+            preprocess_img_width = gr.State(0)
+            preprocess_img_height = gr.State(0)
+            preprocess_processed_path = gr.State(None)
+            
+            # Crop data states (used by JavaScript via hidden inputs)
+            crop_data_state = gr.State({"x": 0, "y": 0, "w": 100, "h": 100})
+            
+            # Hidden textbox for JavaScript to pass crop data to Python (use CSS to hide)
+            crop_data_json = gr.Textbox(
+                value='{"x":0,"y":0,"w":100,"h":100}',
+                elem_id="crop-data-json",
+                visible=True,
+                elem_classes=["hidden-crop-component"]
+            )
+            
+            # Hidden buttons for JavaScript to trigger Python callbacks (use CSS to hide)
+            use_original_btn = gr.Button("use_original", elem_id="use-original-hidden-btn", elem_classes=["hidden-crop-component"])
+            confirm_crop_btn = gr.Button("confirm_crop", elem_id="confirm-crop-hidden-btn", elem_classes=["hidden-crop-component"])
+            
+            # Cropper.js Modal HTML (JS is loaded via head parameter in main.py)
+            from ui.crop_extension import CROP_MODAL_HTML
+            cropper_modal_html = gr.HTML(CROP_MODAL_HTML)
+            
+            # Hidden HTML element to store dimensions for JavaScript
+            preprocess_dimensions_html = gr.HTML(
+                value='<div id="preprocess-dimensions-data" data-width="0" data-height="0" style="display:none;"></div>',
+                visible=True
+            )
+            # ========== END Image Crop Extension ==========
+            
             components['image_conv_image_label'] = gr.Image(
                 label=I18n.get('conv_image_label', lang),
                 type="filepath",
-                image_mode="RGBA",
+                image_mode=None,  # Auto-detect mode to support both JPEG and PNG
                 height=240,
-                visible=True
+                visible=True,
+                elem_id="conv-image-input"
             )
             components['file_conv_batch_input'] = gr.File(
                 label=I18n.get('conv_batch_input', lang),
@@ -982,6 +1016,97 @@ def create_converter_tab_content(lang: str) -> dict:
         inputs=[components['checkbox_conv_batch_mode']],
         outputs=[components['image_conv_image_label'], components['file_conv_batch_input']]
     )
+
+    # ========== Image Crop Extension Events (Non-invasive) ==========
+    from core.image_preprocessor import ImagePreprocessor
+    
+    def on_image_upload_process_with_html(image_path):
+        """When image is uploaded, process and prepare for crop modal"""
+        if image_path is None:
+            return (
+                0, 0, None,
+                '<div id="preprocess-dimensions-data" data-width="0" data-height="0" style="display:none;"></div>'
+            )
+        
+        try:
+            info = ImagePreprocessor.process_upload(image_path)
+            dimensions_html = f'<div id="preprocess-dimensions-data" data-width="{info.width}" data-height="{info.height}" style="display:none;"></div>'
+            return (info.width, info.height, info.processed_path, dimensions_html)
+        except Exception as e:
+            print(f"Image upload error: {e}")
+            return (0, 0, None, '<div id="preprocess-dimensions-data" data-width="0" data-height="0" style="display:none;"></div>')
+    
+    # JavaScript to open crop modal
+    open_crop_modal_js = """
+    () => {
+        setTimeout(() => {
+            const dimElement = document.querySelector('#preprocess-dimensions-data');
+            if (dimElement) {
+                const width = parseInt(dimElement.dataset.width) || 0;
+                const height = parseInt(dimElement.dataset.height) || 0;
+                if (width > 0 && height > 0) {
+                    const imgContainer = document.querySelector('#conv-image-input');
+                    if (imgContainer) {
+                        const img = imgContainer.querySelector('img');
+                        if (img && img.src && typeof window.openCropModal === 'function') {
+                            window.openCropModal(img.src, width, height);
+                        }
+                    }
+                }
+            }
+        }, 300);
+    }
+    """
+    
+    components['image_conv_image_label'].upload(
+        on_image_upload_process_with_html,
+        inputs=[components['image_conv_image_label']],
+        outputs=[preprocess_img_width, preprocess_img_height, preprocess_processed_path, preprocess_dimensions_html]
+    ).then(
+        fn=None,
+        inputs=None,
+        outputs=None,
+        js=open_crop_modal_js
+    )
+    
+    def use_original_image(processed_path, w, h):
+        """Use original image without cropping"""
+        if processed_path is None:
+            return None
+        try:
+            return ImagePreprocessor.convert_to_png(processed_path)
+        except Exception as e:
+            print(f"Use original error: {e}")
+            return None
+    
+    use_original_btn.click(
+        use_original_image,
+        inputs=[preprocess_processed_path, preprocess_img_width, preprocess_img_height],
+        outputs=[components['image_conv_image_label']]
+    )
+    
+    def confirm_crop_image(processed_path, crop_json):
+        """Crop image with specified region from JSON data"""
+        if processed_path is None:
+            return None
+        try:
+            import json
+            data = json.loads(crop_json) if crop_json else {"x": 0, "y": 0, "w": 100, "h": 100}
+            x = int(data.get("x", 0))
+            y = int(data.get("y", 0))
+            w = int(data.get("w", 100))
+            h = int(data.get("h", 100))
+            return ImagePreprocessor.crop_image(processed_path, x, y, w, h)
+        except Exception as e:
+            print(f"Crop error: {e}")
+            return None
+    
+    confirm_crop_btn.click(
+        confirm_crop_image,
+        inputs=[preprocess_processed_path, crop_data_json],
+        outputs=[components['image_conv_image_label']]
+    )
+    # ========== END Image Crop Extension Events ==========
 
     components['dropdown_conv_lut_dropdown'].change(
             on_lut_select,
